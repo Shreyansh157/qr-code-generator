@@ -4,7 +4,7 @@ let qrImage = document.querySelector(".qr-image"); // The actual QR code image
 let qrText = document.querySelector(".qr-text"); // Input field for entering text
 let generateBtn = document.querySelector(".generate-button"); // Button to generate QR code
 let downloadBtn = document.querySelector(".download-button"); // Button to download QR code
-let preValue; // Store previous input value
+let preValue = ""; // Store previous input value
 
 // Add event listener to generate button for click to generate button
 generateBtn.addEventListener("click", generateQR);
@@ -25,22 +25,28 @@ downloadBtn.addEventListener("click", () => {
 function generateQR() {
   let qrValue = qrText.value.trim(); //It removes whitespace from both sides of a string.
   let qrSize = document.querySelector("#qr-size"); // Select the QR size dropdown
-  let qrSizeValue = qrSize.options[qrSize.selectedIndex].text; // Get selected size
+  let qrSizeValue = qrSize.value; // Get selected size
 
-  if (!qrValue || preValue === qrValue) return; // If empty or same as before, exit
+  if (!qrValue) return; // If empty input, exit
   preValue = qrValue; // Store the current value
 
+  // Combine text and size to detect changes
+  let currentValue = qrValue + "|" + qrSizeValue;
+
+  if (preValue === currentValue) return; // If both text & size same, skip
+  preValue = currentValue; // Store current text + size
+
   // Build QR image source with size and data
-  qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSizeValue}&data=${qrValue}` //prettier-ignore
+  qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSizeValue}&data=${qrValue}`;
 
   generateBtn.innerText = "Generating QR Code..."; // Update button text
 
-  // Adding an event listener for when the image is loaded
-  qrImage.addEventListener("load", () => {
-    document.querySelector(".container").classList.add("active"); // Show image container
-    generateBtn.innerText = "Generate QR Code"; // Restore button text
-    showDownloadButton(); // Show the download button after image is loaded
-  });
+  // Use onload instead of addEventListener to avoid multiple bindings
+  qrImage.onload = () => {
+    document.querySelector(".container").classList.add("active");
+    generateBtn.textContent = "Generate QR Code";
+    showDownloadButton();
+  };
 }
 
 // Update UI when QR text input changes
@@ -56,7 +62,8 @@ qrText.addEventListener("keyup", () => {
 function downloadQRImage() {
   let qrValue = qrText.value.trim(); //It removes whitespace from both sides of a string.
   let qrSize = document.querySelector("#qr-size"); // Select the QR size dropdown
-  let qrSizeValue = qrSize.options[qrSize.selectedIndex].text; // Get selected size
+  let qrSizeValue = qrSize.value; // Get selected size
+
   let imageURL = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSizeValue}&data=${qrValue}&margin=10`;
 
   // Create a temporary anchor element to trigger the download
@@ -64,8 +71,8 @@ function downloadQRImage() {
   link.href = imageURL;
   link.setAttribute("target", "_blank");
   link.download = "qrcode.png";
-  // link.click();
-  window.open(imageURL, "_blank"); //works same as link.click()
+  link.click();
+  // window.open(imageURL, "_blank"); //works same as link.click()
 }
 
 // Function to show the download button
